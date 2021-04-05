@@ -42,4 +42,14 @@ public class UserService {
     public User getUserByUsername(String username) {
         return userRepository.findByUsername(username);
     }
+
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    public void updateUserByPassword(String username, String password) {
+        User user = getUserByUsername(username);
+        user.setPassword(password);
+        save(user);
+    }
 }

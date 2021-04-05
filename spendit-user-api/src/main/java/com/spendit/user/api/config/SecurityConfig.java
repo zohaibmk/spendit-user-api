@@ -36,10 +36,12 @@ public class SecurityConfig  extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()
                 .antMatchers("/h2-ui/**",
-                        "/api/user")
+                        "/api/user",
+                        "/user/{email}/forget-password")
                 .permitAll()
                 .antMatchers("/api/login",
-                        "/api/user/{username}/logout")
+                        "/api/user/{username}/logout",
+                        "/api/user/{username}/reset-password")
                 .authenticated()
                 .and()
                 .httpBasic()

@@ -51,6 +51,25 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping(value = "/user/{username}/reset-password")
+    public ResponseEntity<Void> resetPassword(HttpServletRequest request, HttpServletResponse response,
+                                              @RequestBody String password, @PathVariable String username) {
+        LOGGER.info("Resetting password for user with username: {}.", username);
+
+        String loggedInUsername = userService.getLoggedInUsername();
+        if (!UserValidator.isValidPassword(password)) {
+            throw new InvalidValueException("Password length should be greater than 6 characters.");
+        }
+        else if (!loggedInUsername.equals(username)) {
+            throw new InvalidValueException("Invalid username. Please login with correct username.");
+        }
+        userService.updateUserByPassword(username, password);
+        logoutUser(request, response, username);
+
+        LOGGER.info("Logging out current user to login with new password.");
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping(value = "/login")
     public ResponseEntity<User> loginUser() {
         LOGGER.info("Logging In User...");
@@ -74,5 +93,21 @@ public class UserController {
 
         LOGGER.info("Logout for user: {} successful.", authentication.getName());
         return ResponseEntity.ok().body("Logout for user: " + authentication.getName() + " successful.");
+    }
+
+    @GetMapping(value = "/user/{email}/forget-password")
+    public ResponseEntity<String> forgetPassword(@PathVariable String email) {
+        LOGGER.info("Starting Forget Password for email: {}.", email);
+
+        if (!UserValidator.isValidEmail(email)) {
+            throw new InvalidValueException("Invalid email. Please enter the email in the format abc@abc.com.");
+        }
+        User user = userService.getUserByEmail(email);
+        if (user == null) {
+            throw new InvalidValueException("User Not Found with email: " + email + ".");
+        }
+
+        LOGGER.info("Forget Password Successful for email: {}", email);
+        return ResponseEntity.ok().body("A password reset link is sent to your email: " + user.getEmail() + ".");
     }
 }
