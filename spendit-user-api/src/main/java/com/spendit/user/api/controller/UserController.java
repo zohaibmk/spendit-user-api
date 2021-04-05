@@ -8,10 +8,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping("/api")
@@ -46,5 +49,30 @@ public class UserController {
 
         LOGGER.info("User saved successfully.");
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping(value = "/login")
+    public ResponseEntity<User> loginUser() {
+        LOGGER.info("Logging In User...");
+        String username = userService.getLoggedInUsername();
+        User user = userService.getUserByUsername(username);
+
+        LOGGER.info("User retrieved for username: {}.", username);
+        return ResponseEntity.ok().body(user);
+    }
+
+    @GetMapping(value = "/user/{username}/logout")
+    public ResponseEntity<String> logoutUser(HttpServletRequest request, HttpServletResponse response,
+                                             @PathVariable String username) {
+        LOGGER.info("User logging out with username: {}.", username);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!authentication.getName().equals(username)) {
+            throw new InvalidValueException("Invalid username. Please login with correct username.");
+        }
+        new SecurityContextLogoutHandler().logout(request, response, authentication);
+
+        LOGGER.info("Logout for user: {} successful.", authentication.getName());
+        return ResponseEntity.ok().body("Logout for user: " + authentication.getName() + " successful.");
     }
 }
